@@ -1,0 +1,50 @@
+﻿
+@if (fixedWidth == true)
+{
+    CssClass = CssClass + " " + "uniform-card-width";
+}
+
+<MudCard Elevation="@Elevation" Class="@CssClass">
+    
+    <MudCardContent>
+        @if (!String.IsNullOrEmpty(Header))
+        {
+            <MudText Typo="Typo.h6">@Header</MudText> 
+        }
+
+        @if (ChildContent != null)
+        {
+            @ChildContent
+        }
+    </MudCardContent>
+
+</MudCard>
+
+
+@code {
+    [Parameter]
+    public string Header { get; set; } = String.Empty;
+
+    [Parameter]
+    public string CssClass { get; set; } = String.Empty;
+
+    [Parameter]
+    public int Elevation { get; set; } = 4;
+
+    [Parameter]
+    public RenderFragment ChildContent { get; set; } = null;
+
+    [Parameter]
+    public bool fixedWidth { get; set; } = false;
+}
+
+@* Available class-styles: *@
+<style>
+    .gray-filled {
+        background-color: #EEEEEE;
+    }
+
+    .uniform-card-width {
+        width: 300px;
+    }
+</style>

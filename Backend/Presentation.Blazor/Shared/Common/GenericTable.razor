@@ -1,0 +1,40 @@
+﻿@typeparam TItem
+
+@if(Elements != null && TableHeaders != null)
+{
+    @if (Elements.All(element => element.Count == TableHeaders.Length))
+    {
+        <MudTable Items="@Elements" Breakpoint="Breakpoint.Sm">
+            <HeaderContent>
+                @foreach (var header in TableHeaders)
+                {
+                    <MudTh Style="text-align: center">@header</MudTh>
+                }
+            </HeaderContent>
+
+            <RowTemplate>
+                @foreach (var item in context)
+                {
+                    <MudTd Style="text-align: center">@item</MudTd>
+                }
+            </RowTemplate>
+        </MudTable>
+    } else
+    {
+        <MudText Typo="Typo.button" Color="Color.Error">
+            The column count (header) doesn't match with the contents.
+        </MudText>
+    }
+
+}
+
+
+
+@code {
+    [Parameter]
+    public IEnumerable<ICollection<TItem>> Elements { get; set; } =
+        new List<ICollection<TItem>>();
+
+    [Parameter]
+    public string[]? TableHeaders { get; set; }
+}

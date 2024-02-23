@@ -1,0 +1,157 @@
+﻿@page "/addcontent"
+@using System.ComponentModel.DataAnnotations;
+@using TechnicalEvaluation.Infrastructure;
+@using TechnicalEvaluation.Presentation.Blazor.Shared.Common
+@inject ApiClient ApiClient
+@inject NavigationManager NavManager
+@inject ISnackbar Snackbar
+
+
+<PageTitle>Add Content To Career</PageTitle>
+
+<CustomHeader HeaderText="@HeaderText" DescriptionText="@DescriptionText" />
+
+
+@if (String.IsNullOrEmpty(ErrorMessage))
+{
+    <MudPaper Class="pa-4" Outlined="true">
+
+    <MudForm @ref="form" @bind-IsValid="@isFormValid">
+
+        <MudSelect T="string" Label="Career" AnchorOrigin="Origin.BottomCenter"
+                @bind-Value="SelectedCareer"
+                Required="true" RequiredError="A career must be selected.">
+            @if (AvailableCareers is not null)
+            {
+                @foreach (var career in AvailableCareers)
+                {
+                    <MudSelectItem Value="@career.CareerName" />
+                }
+            }
+        </MudSelect>
+
+        <MudSelect T="string" Label="Content type" AnchorOrigin="Origin.BottomCenter"
+                   @bind-Value="SelectedContentType"
+                   Required="true" RequiredError="A content type must be selected.">
+            @if (AvailableContentTypes is not null)
+            {
+                @foreach (var contentType in AvailableContentTypes)
+                {
+                    <MudSelectItem Value="@contentType.Id" />
+                }
+            }
+        </MudSelect>
+
+
+        <MudTextField T="string" Counter="@MaxContentCharacters"
+                Immediate="true" @bind-Value="ContentDescription"
+                Validation="@(new Func<string, IEnumerable<string>>(MaxCharacters))"
+                Label="Content" Variant="Variant.Text" AutoGrow  MaxLines="2"
+                Required="true" RequiredError="The content must not be null."/>
+
+
+    </MudForm>
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="@(!IsButtonEnabled())"
+            OnClick="AddContentToCareer">
+        Add Content
+    </MudButton>
+
+     </MudPaper>
+}
+else
+{
+    <p>@ErrorMessage</p>
+}
+
+
+
+ @code {
+
+    #region Constants and Fields
+    private const string HeaderText = "Add Content to a Career";
+    private const string DescriptionText = "Use the following form to add contents to careers.";
+
+    private MudForm form;
+    private bool isFormValid = false;
+    private bool _processing = false;
+    private int MaxContentCharacters = 255;
+    #endregion
+
+    #region Form-Saved Fields
+    [Required]
+    public string SelectedCareer;
+
+    [Required]
+    public string ContentDescription;
+
+    [Required]
+    public string SelectedContentType;
+    #endregion
+
+    public CareerDto[]? AvailableCareers;
+
+    public ContentTypeDto[]? AvailableContentTypes;
+
+    private string ErrorMessage = String.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            // Get all content types, to display them during creation.
+            var contentTypeDtoCollection = await ApiClient.ContentTypesListAsync();
+            AvailableContentTypes = contentTypeDtoCollection.ToArray();
+
+            // Get all available careers to select one during creation.
+            var careerListDtoCollection = await ApiClient.CareersListGetAsync();
+            AvailableCareers = careerListDtoCollection.ToArray();
+        }
+        catch (ApiException apiExc)
+        {
+            ErrorMessage = "An error occurred when getting careers and content types.";
+        }
+
+
+    }
+
+
+
+    private IEnumerable<string> MaxCharacters(string ch)
+    {
+        if (!string.IsNullOrEmpty(ch) && MaxContentCharacters < ch?.Length)
+            yield return $"Max {MaxContentCharacters} characters";
+    }
+
+    private async Task AddContentToCareer()
+    {
+        _processing = true;
+        var newContentDto = new ContentDto
+            {
+                ContentDescription = ContentDescription, ContentType = SelectedContentType
+            };
+        try
+        {
+            await ApiClient.CareersAddContentAsync(SelectedCareer, newContentDto);
+            Snackbar.Add("The content was added successfully", Severity.Success);
+        }
+        catch (ApiException apiExc)
+        {
+            Snackbar.Add("An error occurred when adding the content to the career, check if content already exists.", Severity.Error);
+        }
+        ClearValues();
+        _processing = false;
+    }
+
+    private void ClearValues()
+    {
+        SelectedCareer = String.Empty;
+        ContentDescription = String.Empty;
+        SelectedContentType = String.Empty;
+    }
+
+
+    private bool IsButtonEnabled()
+    {
+        return isFormValid && !_processing;
+    }
+}

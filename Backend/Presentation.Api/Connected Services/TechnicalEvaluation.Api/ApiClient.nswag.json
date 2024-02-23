@@ -1,0 +1,340 @@
+﻿{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "TechnicalEvaluation.Presentation.Api",
+    "version": "1.0"
+  },
+  "paths": {
+    "/careers/{careerName}/add-content": {
+      "post": {
+        "tags": [
+          "CareersEndpoints"
+        ],
+        "operationId": "AddContentToCareer",
+        "parameters": [
+          {
+            "name": "careerName",
+            "in": "path",
+            "style": "simple",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ContentDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "404": {
+            "description": "Not Found"
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AddContentToCareerResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/careers/add-career": {
+      "post": {
+        "tags": [
+          "CareersEndpoints"
+        ],
+        "operationId": "AddCareer",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CareerDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "404": {
+            "description": "Not Found"
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateCareerResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/careers/list": {
+      "get": {
+        "tags": [
+          "CareersEndpoints"
+        ],
+        "operationId": "CareersList",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CareerDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/careers/list/{careerName}": {
+      "get": {
+        "tags": [
+          "CareersEndpoints"
+        ],
+        "operationId": "SearchCareersList",
+        "parameters": [
+          {
+            "name": "careerName",
+            "in": "path",
+            "style": "simple",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SearchCareersByNameResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/careers/info/{careerName}": {
+      "get": {
+        "tags": [
+          "CareersEndpoints"
+        ],
+        "operationId": "GetCareer",
+        "parameters": [
+          {
+            "name": "careerName",
+            "in": "path",
+            "style": "simple",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "404": {
+            "description": "Not Found"
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetCareerByIdResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/contentTypes/list": {
+      "get": {
+        "tags": [
+          "CareersEndpoints"
+        ],
+        "operationId": "GetAllContentTypes",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ContentTypeDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/careers/update": {
+      "put": {
+        "tags": [
+          "CareersEndpoints"
+        ],
+        "operationId": "UpdateCareer",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CareerDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AddContentToCareerResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "career": {
+            "$ref": "#/components/schemas/CareerDto"
+          }
+        }
+      },
+      "AreaDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "areaDescription": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "CareerDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "careerName": {
+            "type": "string",
+            "nullable": true
+          },
+          "womenPercentage": {
+            "type": "number",
+            "format": "float"
+          },
+          "scholarshipBudget": {
+            "type": "number",
+            "format": "double"
+          },
+          "contents": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "$ref": "#/components/schemas/ContentDto"
+            }
+          },
+          "areas": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "$ref": "#/components/schemas/AreaDto"
+            }
+          }
+        }
+      },
+      "ContentDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "contentDescription": {
+            "type": "string",
+            "nullable": true
+          },
+          "contentType": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "ContentTypeDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "CreateCareerResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "career": {
+            "$ref": "#/components/schemas/CareerDto"
+          }
+        }
+      },
+      "GetCareerByIdResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "career": {
+            "$ref": "#/components/schemas/CareerDto"
+          }
+        }
+      },
+      "SearchCareersByNameResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "careers": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "$ref": "#/components/schemas/CareerDto"
+            }
+          }
+        }
+      }
+    }
+  }
+}

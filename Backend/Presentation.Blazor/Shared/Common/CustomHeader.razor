@@ -1,0 +1,18 @@
+﻿
+<MudText Typo="Typo.h1">
+	@HeaderText
+</MudText>
+
+<MudText Typo="Typo.body1">
+	@DescriptionText
+</MudText>
+
+<br />
+
+@code {
+	[Parameter]
+	public string HeaderText { get; set; }
+
+	[Parameter]
+	public string DescriptionText { get; set; }
+}

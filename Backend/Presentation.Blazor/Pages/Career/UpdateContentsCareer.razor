@@ -1,0 +1,243 @@
+﻿@page "/updatecontent"
+@using System.ComponentModel.DataAnnotations;
+@using TechnicalEvaluation.Infrastructure;
+@using TechnicalEvaluation.Presentation.Blazor.Shared.Common
+@inject ApiClient ApiClient
+@inject ISnackbar Snackbar
+
+
+<PageTitle>Update Career's Content</PageTitle>
+
+<CustomHeader HeaderText="@HeaderText" DescriptionText="@DescriptionText" />
+
+@if (String.IsNullOrEmpty(ErrorMessage))
+{
+    <MudPaper Class="pa-4" Outlined="true">
+
+    <MudForm @ref="form" @bind-IsValid="@isFormValid">
+
+        <MudSelect T="CareerDto" 
+                   ToStringFunc="@(p => p.CareerName)"
+                   Label="Career"
+                   Required="true"
+                   RequiredError="A career must be selected."
+                   ValueChanged="OnCareerSelected"
+                   AnchorOrigin="Origin.BottomCenter"
+                   Value="CareerDtoSelected">
+
+            @if (AvailableCareers is not null)
+            {
+                @foreach (var career in AvailableCareers)
+                {
+                    <MudSelectItem Value="@career" />
+                }
+            }
+        </MudSelect>
+
+        <MudSelect T="ContentDto"
+                   ToStringFunc="@(c => c.ContentDescription)"
+                   Label="Content to update"
+                   Required="true"
+                   RequiredError="The content to update must be selected."
+                   AnchorOrigin="Origin.BottomCenter"
+                   Disabled="@(CareerDtoSelected is null)"
+                   ValueChanged="OnContentDescriptionSelected"
+                   Value="ContentDtoToDelete">
+
+            @if (CareerDtoSelected is not null)
+            {
+                @foreach (var content in CareerDtoSelected.Contents)
+                {
+                    <MudSelectItem Value="@content" />
+                }
+            }
+        </MudSelect>
+
+        <MudSelect T="string"
+                   Label="Content type to update"
+                   Required="true"
+                   RequiredError="The content type to update must be selected."
+                   AnchorOrigin="Origin.BottomCenter"
+                   Disabled="@(ContentDtoToDelete is null)"
+                   @bind-Value="@newContentType">
+
+            @if (ContentDtoToDelete is not null)
+            {
+                @foreach (var contentType in AvailableContentTypes)
+                {
+                    <MudSelectItem Value="@contentType.Id" />
+                }
+            }
+        </MudSelect>
+
+
+        <MudTextField T="string"
+                      Counter="@MaxContentCharacters"
+                      Immediate="true"
+                      @bind-Value="newContentDescription"
+                      Validation="@(new Func<string, IEnumerable<string>>(MaxCharacters))"
+                      Label="Content"
+                      Variant="Variant.Text"
+                      AutoGrow
+                      MaxLines="2"
+                      Required="true"
+                      RequiredError="The content must not be null." 
+                      Disabled="@(ContentDtoToDelete is null)"/>
+
+
+
+
+    </MudForm>
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="@(!IsButtonEnabled())"
+            OnClick="UpdateCareer">
+        Update Content
+    </MudButton>
+
+
+     </MudPaper>
+}
+else
+{
+    <p>@ErrorMessage</p>
+}
+
+
+
+@code {
+
+    #region Constants and Fields
+    private const string HeaderText = "Update Career's Content";
+    private const string DescriptionText = "Use the following form to update careers' contents.";
+
+    private MudForm form;
+    private bool isFormValid = false;
+    private bool _processing = false;
+    private int MaxContentCharacters = 255;
+    #endregion
+
+
+
+    public CareerDto[]? AvailableCareers;
+
+    public ContentTypeDto[]? AvailableContentTypes;
+
+    // Selected career's contents
+    public ContentDto[]? AvailableContents;
+
+    public CareerDto? CareerDtoSelected;
+
+    public ContentDto? ContentDtoToDelete;
+
+
+    // To create the new ContentDto that replaces the deleted one.
+    private string? newContentType;
+
+    private string? newContentDescription;
+
+
+    private string ErrorMessage = String.Empty;
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            // Get all content types, to display them during creation.
+            var contentTypeDtoCollection = await ApiClient.ContentTypesListAsync();
+            AvailableContentTypes = contentTypeDtoCollection.ToArray();
+
+            // Get all available careers to select one during creation.
+            var careerListDtoCollection = await ApiClient.CareersListGetAsync();
+            AvailableCareers = careerListDtoCollection.ToArray();
+        }
+        catch (ApiException apiExc)
+        {
+            ErrorMessage = "An error occurred when getting careers and content types.";
+        }
+    }
+
+
+
+    private IEnumerable<string> MaxCharacters(string ch)
+    {
+        if (!string.IsNullOrEmpty(ch) && MaxContentCharacters < ch?.Length)
+            yield return $"Max {MaxContentCharacters} characters";
+    }
+
+
+    private async Task UpdateCareer()
+    {
+        _processing = true;
+        if (CareerDtoSelected is null)
+        {
+            throw new ArgumentNullException("CareerDtoSelected is null");
+        }
+        CareerDtoSelected.Contents.Remove(ContentDtoToDelete);
+
+        var newContentDto = new ContentDto
+            {
+                ContentDescription = newContentDescription,
+                ContentType = newContentType
+            };
+
+        CareerDtoSelected.Contents.Add(newContentDto);
+
+        try
+        {
+            await ApiClient.CareersUpdateAsync(CareerDtoSelected);
+            Snackbar.Add("The career was updated successfully", Severity.Success);
+
+        } 
+        catch (ApiException apiExc)
+        {
+            Snackbar.Add("An error occurred when updating the career's contents.", Severity.Error);
+        }
+        finally
+        {
+            ClearValues();
+        }
+
+        _processing = false;
+    }
+
+
+    private bool IsButtonEnabled()
+    {
+        return isFormValid && !_processing;
+    }
+
+    private async Task<CareerDto> GetCareer(string careerName)
+    {
+        try
+        {
+            var getCareerByIdResponse = await ApiClient.CareersInfoAsync(careerName);
+            return getCareerByIdResponse.Career;
+        }
+        catch (ApiException apiExc)
+        {
+            ErrorMessage = $"There was a problem when looking for the {careerName} career, it was possibly not found.";
+            throw new InvalidDataException($"There was a problem when looking for the {careerName} career, it was possibly not found.");
+        }
+    }
+
+    private void OnCareerSelected(CareerDto careerDtoSelected)
+    {
+        CareerDtoSelected = careerDtoSelected;
+        ContentDtoToDelete = null;
+    }
+
+    private void OnContentDescriptionSelected(ContentDto contentDtoSelected)
+    {
+        ContentDtoToDelete = contentDtoSelected;
+        newContentType = contentDtoSelected.ContentType; // autofill
+        newContentDescription = contentDtoSelected.ContentDescription;
+    }
+
+    private void ClearValues()
+    {
+        CareerDtoSelected = null;
+        ContentDtoToDelete = null;
+        newContentType = null;
+        newContentDescription = null;
+    }
+}

@@ -1,0 +1,111 @@
+﻿@page "/findcareersbyname"
+@using System.ComponentModel.DataAnnotations;
+@using TechnicalEvaluation.Infrastructure;
+@using TechnicalEvaluation.Presentation.Blazor.Shared.Common
+@using TechnicalEvaluation.Presentation.Blazor
+@inject ApiClient ApiClient
+@inject NavigationManager NavManager
+@inject ISnackbar Snackbar
+
+
+
+<PageTitle>Find Careers By Name</PageTitle>
+
+<CustomHeader HeaderText="@HeaderText" DescriptionText="@DescriptionText" />
+
+<MudPaper Class="pa-4" Outlined="true">
+    <MudForm @ref="form" @bind-IsValid="@isFormValid">
+
+
+        <MudTextField T="string" Counter="@MaxContentCharacters"
+                Immediate="true" @bind-Value="CareerName"
+                Validation="@(new Func<string, IEnumerable<string>>(MaxCharacters))"
+                Label="Career" Variant="Variant.Text" Lines="1"
+                Required="true" RequiredError="Cannot search for a null career."/>
+
+
+    </MudForm>
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="@(!IsButtonEnabled())"
+            OnClick="FindByName">
+        Search
+    </MudButton>
+
+    <br/>
+    <br/>
+
+    @if (careersFound is not null)
+    {
+        <GenericDataGrid TItem="CareerDto"
+                         Items="@careersFound"
+                         Columns="@careerColumns">
+            <DgButton>
+                <MudButton Size="@Size.Small"
+                           Variant="@Variant.Filled"
+                           Color="Color.Primary"
+                           Href="@NavManager.ToAbsoluteUri($"/getspecificcareer/{Uri.EscapeDataString(context.Item.CareerName)}").ToString()">
+                    More Details
+                </MudButton>
+            </DgButton>             
+        </GenericDataGrid>
+    }
+
+
+</MudPaper>
+
+
+
+@code {
+    private const string HeaderText = "Find Careers by Name";
+    private const string DescriptionText = "Use the following form to search for matching careers.";
+
+    private MudForm form;
+    private bool isFormValid = false;
+    private bool _processing = false;
+    private int MaxContentCharacters = 30;
+
+
+    [Required]
+    public string? CareerName;
+
+    private CareerDto[]? careersFound;
+
+    private string ErrorMessage = String.Empty;
+
+    private IEnumerable<string> MaxCharacters(string ch)
+    {
+        if (!string.IsNullOrEmpty(ch) && MaxContentCharacters < ch?.Length)
+            yield return "Max " + MaxContentCharacters.ToString() + " characters";
+    }
+
+    private async Task FindByName()
+    {
+        _processing = true;
+        try
+        {
+            var searchCareersByNameResponse = await ApiClient.CareersListGetAsync(CareerName);
+            careersFound = searchCareersByNameResponse.Careers.ToArray();
+        }
+        catch (ApiException apiExc)
+        {
+            Snackbar.Add("An error occurred when searching for matching careers.", Severity.Error);
+        }
+        _processing = false;
+    }
+
+    private bool IsButtonEnabled()
+    {
+        return isFormValid && !_processing;
+    }
+
+
+    private List<(string Property, string Title)> careerColumns =
+        new List<(string Property, string Title)>
+            {
+                ("CareerName", "Name")
+            };
+
+    private void ClearValues()
+    {
+        CareerName = null;
+    }
+}

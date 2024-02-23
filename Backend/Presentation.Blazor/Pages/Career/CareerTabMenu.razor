@@ -1,0 +1,53 @@
+﻿@using TechnicalEvaluation.Infrastructure;
+@using TechnicalEvaluation.Presentation.Blazor.Shared.Common
+@inject ApiClient ApiClient
+
+@if (String.IsNullOrEmpty(errorMessage)) // No error yet
+{
+    @if (Career is not null)
+    {
+        <MudTabs Outlined="true" Position="@Position.Top" Rounded="true" Border="true"
+                 ApplyEffectsToContainer="true" Class="mt-8" PanelClass="pa-6" >
+
+            <MudTabPanel Text="Areas">
+
+                <GenericDataGrid TItem="AreaDto" Items="@Career.Areas" Columns="@AreaColumns" />
+
+            </MudTabPanel>
+
+            <MudTabPanel Text="Contents">
+
+                <GenericDataGrid TItem="ContentDto" Items="@Career.Contents" Columns="@ContentColumns" />
+
+            </MudTabPanel>
+
+        </MudTabs>
+    }
+
+}
+else
+{
+    <p>@errorMessage</p>
+}
+
+@code {
+
+    [Parameter]
+    public CareerDto? Career { get; set; } = null;
+
+    private string errorMessage = String.Empty;
+    
+    private List<(string Property, string Title)> AreaColumns =
+        new List<(string Property, string Title)>
+            {
+                ("AreaDescription", "Area")
+            };
+
+    private List<(string Property, string Title)> ContentColumns =
+        new List<(string Property, string Title)>
+            {
+                ("ContentDescription", "Description"),
+                ("ContentType", "Type")
+            };
+
+}

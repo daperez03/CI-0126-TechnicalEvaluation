@@ -1,0 +1,77 @@
+﻿@page "/getspecificcareer/{careerName}"
+@using System.ComponentModel.DataAnnotations;
+@using TechnicalEvaluation.Infrastructure;
+@using TechnicalEvaluation.Presentation.Blazor.Shared.Common
+@inject ApiClient ApiClient
+
+<PageTitle>Add Content To Career</PageTitle>
+
+<CustomHeader HeaderText="@HeaderText" DescriptionText="@DescriptionText" />
+
+@if (!String.IsNullOrEmpty(ErrorMessage))
+{
+    <p>@ErrorMessage</p>
+} 
+else
+{
+    @if (Career is null)
+    {
+        <MudProgressCircular Color="Color.Primary" Indeterminate="true" Class="align: center" />
+    }
+    else
+    {
+
+        <MudText Typo="Typo.h4">@careerName</MudText>
+        <br />
+
+        <GenericCard Elevation="14" fixedWidth="true" Header="Scholarship">
+            <MudText Typo="Typo.h6">$@Career.ScholarshipBudget</MudText>
+        </GenericCard>
+
+        <br />
+        <CareerTabMenu Career="@Career" />
+    }
+    
+}
+
+    
+
+
+
+@code {
+
+    #region Constants and Fields
+    private const string HeaderText = "Get a Specific Career's Information";
+    private const string DescriptionText = "The career's information is displayed below.";
+    #endregion
+
+    private CareerDto? Career = null;
+
+    [Parameter]
+    public string? careerName { get; set; }
+
+    private string ErrorMessage = String.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Get the career from the Api
+        try
+        {
+            var getCareerByIdResponse = await ApiClient.CareersInfoAsync(careerName);
+            Career = getCareerByIdResponse.Career;
+        }
+        catch (ApiException apiExc)
+        {
+            if (apiExc.StatusCode == 404)
+            {
+                ErrorMessage = $"The {careerName} career was not found.";
+            }
+            else
+            {
+                ErrorMessage = $"An unexpected error ocurred when looking for the {careerName} career.";
+            }
+        }
+
+        
+    }
+}
